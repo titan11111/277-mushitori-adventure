@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>むしとりアドベンチャー</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- 中央：ステージ（DOM先頭に置き、開始ボタンを最初のbuttonにする。見た目の並びはCSS gridで維持） -->
+    <main class="col center-col">
+      <section id="start" class="overlay open">
+        <div class="start-card">
+          <p class="eyebrow">A DAY IN THE SATOYAMA</p>
+          <h1>むしとり<br><em>アドベンチャー</em></h1>
+          <p>網を持って里山を歩く。走ればチョウは逃げる。<br>ゆっくり近づけば、木のクワガタも見える。</p>
+          <ul class="how">
+            <li><b>矢印/WASD</b>で歩く・<b>Shift</b>で走る・<b>C</b>で忍び足</li>
+            <li><b>Space</b>またはあみボタンで、向いている前だけ届く</li>
+            <li>朝・昼・夕・夜、時間は自動で流れる</li>
+          </ul>
+          <button type="button" id="startBtn" class="primary game-btn">森へ出かける</button>
+        </div>
+      </section>
+
+      <div class="stage-frame">
+        <canvas id="stage" width="1100" height="700" aria-label="里山のステージ"></canvas>
+
+        <div class="stage-top-left">
+          <span class="period-icon" id="periodIcon">☀</span>
+          <b id="periodName">朝</b>
+          <span class="clock" id="clock">06:12</span>
+        </div>
+        <div class="stage-top-right">
+          <i>🍯</i>
+          <span>つかまえた数</span>
+          <b id="catchCount">0 / 36</b>
+        </div>
+        <div class="stage-message" id="message">近づいて正面で網を振ろう</div>
+
+        <div class="stage-bottom">
+          <div class="hearts" id="hearts"></div>
+          <div class="controls">
+            <div id="stick"><div id="stickBase"><div id="stickKnob"></div></div></div>
+            <button type="button" id="swingBtn" class="primary game-btn swing-btn"><b>あみ</b><small>SPACE</small></button>
+          </div>
+          <div class="console-buttons">
+            <button type="button" id="bookBtn" class="game-btn"><i>Y</i>図鑑</button>
+            <button type="button" id="bagBtn" class="game-btn"><i>X</i>虫かご</button>
+            <button type="button" id="menuBtn" class="game-btn"><i>+</i>メニュー</button>
+            <button type="button" id="muteBtn" class="game-btn mute-btn" aria-label="ミュート">♪</button>
+          </div>
+        </div>
+
+        <section id="catchCard">
+          <small id="catchLabel">NEW</small>
+          <canvas id="catchIcon" width="140" height="140"></canvas>
+          <h2 id="catchName"></h2>
+          <p id="catchNote"></p>
+          <span class="hint">タップで閉じる</span>
+        </section>
+      </div>
+
+      <p class="tip-banner">いろんな時間・場所で、たくさんのむしを見つけよう！ 走ると逃げやすい虫も、忍び足ならそっと近づける。</p>
+    </main>
+
+    <!-- 左カラム：タイトル・アクション・図鑑 -->
+    <aside class="col left-col">
+      <header class="logo-block">
+        <div class="logo-title"><i class="bug-emoji">🐞</i><h1>むしとり<br><em>アドベンチャー</em></h1></div>
+        <p class="tagline">小さな生きもの、大冒険！</p>
+      </header>
+
+      <section class="panel action-panel">
+        <h2><i>🍃</i>アクション（プレイヤーの動き）</h2>
+        <div class="action-grid">
+          <div class="action-item" id="act-idle"><canvas width="48" height="48"></canvas><small>待機</small></div>
+          <div class="action-item" id="act-walk"><canvas width="48" height="48"></canvas><small>歩く</small></div>
+          <div class="action-item" id="act-run"><canvas width="48" height="48"></canvas><small>走る</small></div>
+          <div class="action-item" id="act-windup"><canvas width="48" height="48"></canvas><small>ふりかぶり</small></div>
+          <div class="action-item" id="act-swing"><canvas width="48" height="48"></canvas><small>スイング</small></div>
+          <div class="action-item" id="act-caught"><canvas width="48" height="48"></canvas><small>つかまえた!</small></div>
+        </div>
+      </section>
+
+      <section class="panel book-panel" id="book">
+        <header class="book-head">
+          <h2><i>📖</i>図鑑</h2>
+          <p id="bookStatus">見つけたむしを登録しよう</p>
+          <button type="button" class="close game-btn" id="bookClose" aria-label="閉じる">×</button>
+        </header>
+        <nav class="tabs">
+          <button type="button" class="tab-btn active" data-tab="all">ぜんぶ</button>
+          <button type="button" class="tab-btn" data-tab="morning">あさ</button>
+          <button type="button" class="tab-btn" data-tab="day">ひる</button>
+          <button type="button" class="tab-btn" data-tab="evening">ゆう</button>
+          <button type="button" class="tab-btn" data-tab="night">よる</button>
+        </nav>
+        <div class="book-grid" id="bookGrid"></div>
+      </section>
+    </aside>
+
+    <!-- 右カラム：朝昼夕夜カード -->
+    <aside class="col right-col">
+      <section class="period-card" id="card-morning">
+        <header><i>☀</i><b>朝</b><span>しずくきらめく草原</span></header>
+        <div class="mini-grid"></div>
+      </section>
+      <section class="period-card" id="card-day">
+        <header><i>⛅</i><b>昼</b><span>まぶしい森のふち</span></header>
+        <div class="mini-grid"></div>
+      </section>
+      <section class="period-card" id="card-evening">
+        <header><i>🌇</i><b>夕</b><span>ゆうやけの原っぱ</span></header>
+        <div class="mini-grid"></div>
+      </section>
+      <section class="period-card" id="card-night">
+        <header><i>🌙</i><b>夜</b><span>月あかりの森</span></header>
+        <div class="mini-grid"></div>
+      </section>
+    </aside>
+
+    <!-- モーダル群 -->
+    <section id="bag" class="overlay">
+      <div class="bag-card">
+        <header><h2>虫かご</h2><button type="button" class="close game-btn" id="bagClose" aria-label="閉じる">×</button></header>
+        <div id="bagList"></div>
+      </div>
+    </section>
+
+    <section id="menu" class="overlay">
+      <div class="menu-card">
+        <header><h2>メニュー</h2><button type="button" class="close game-btn" id="menuClose" aria-label="閉じる">×</button></header>
+        <button type="button" id="skipTimeBtn" class="game-btn">⏩ 時間を進める</button>
+        <button type="button" id="resetBtn" class="game-btn danger">🗑 図鑑をリセット</button>
+      </div>
+    </section>
+
+    <section id="clear" class="overlay">
+      <div class="clear-card">
+        <span class="trophy">🏆</span>
+        <p class="eyebrow">FIELD BOOK COMPLETE</p>
+        <h2>図鑑コンプリート</h2>
+        <p>朝から夜まで、里山の小さな命をすべて見つけました。</p>
+        <button type="button" id="clearContinueBtn" class="primary game-btn">完成した図鑑を見る</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="render.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
