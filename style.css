@@ -136,39 +136,88 @@ button { font-family: inherit; }
   position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px 12px;
   display: flex; flex-direction: column; gap: 8px;
   background: linear-gradient(180deg, transparent, rgba(0,0,0,0.35));
+  pointer-events: none;
 }
-.hearts { display: flex; gap: 4px; font-size: 20px; }
+.hearts { display: flex; gap: 4px; font-size: 20px; pointer-events: none; }
 .heart { color: rgba(255,255,255,0.35); }
 .heart.full { color: #e5473f; text-shadow: 0 0 6px rgba(229,71,63,0.7); }
 
-.controls { display: flex; align-items: center; justify-content: space-between; }
-#stick { width: 84px; height: 84px; }
-#stickBase {
-  width: 84px; height: 84px; border-radius: 50%;
-  background: rgba(255,255,255,0.16); border: 2px solid rgba(255,255,255,0.4);
-  position: relative; touch-action: none;
+#virtual-controls {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 6px 10px calc(8px + env(safe-area-inset-bottom));
+  touch-action: none;
 }
-#stickKnob {
-  width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.75);
-  position: absolute; left: 22px; top: 22px; transition: transform 0.02s linear;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+.vc-hud {
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
 }
+.vc-hud .game-btn {
+  display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 6px 10px; min-height: 44px;
+}
+.vc-hud i {
+  font-style: normal; background: rgba(255,255,255,0.25); border-radius: 5px; padding: 0 5px; font-size: 10px;
+}
+.vc-play {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; min-height: 0;
+}
+.dpad {
+  position: relative;
+  width: min(38vw, 148px); height: min(38vw, 148px);
+  flex-shrink: 0; touch-action: none;
+  background:
+    linear-gradient(rgba(255,255,255,0.16), rgba(255,255,255,0.16)) 50% 0 / 34% 100% no-repeat,
+    linear-gradient(rgba(255,255,255,0.16), rgba(255,255,255,0.16)) 0 50% / 100% 34% no-repeat;
+  border-radius: 18px;
+}
+.dpad .arr {
+  position: absolute; color: #fff; font-size: 16px; opacity: 0.7; pointer-events: none;
+  transition: opacity 0.08s, transform 0.08s;
+}
+.dpad .arr.u { top: 8%; left: 50%; transform: translateX(-50%); }
+.dpad .arr.d { bottom: 8%; left: 50%; transform: translateX(-50%); }
+.dpad .arr.l { left: 10%; top: 50%; transform: translateY(-50%); }
+.dpad .arr.r { right: 10%; top: 50%; transform: translateY(-50%); }
+.dpad.press-u .arr.u,
+.dpad.press-d .arr.d,
+.dpad.press-l .arr.l,
+.dpad.press-r .arr.r { opacity: 1; color: var(--accent); }
+.dpad-nub {
+  position: absolute; left: 50%; top: 50%; width: 28%; height: 28%;
+  border-radius: 50%; background: rgba(255,255,255,0.28);
+  transform: translate(-50%, -50%); pointer-events: none;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25);
+}
+.vc-actions {
+  display: grid;
+  grid-template-columns: 64px 64px 88px;
+  grid-template-rows: 64px 64px;
+  gap: 8px;
+  align-items: center;
+}
+.hold-btn {
+  min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; font-size: 13px;
+}
+.hold-btn small { font-size: 8px; opacity: 0.75; font-weight: 500; }
+#sneakBtn { grid-column: 1; grid-row: 1; }
+#runBtn { grid-column: 1; grid-row: 2; }
 .swing-btn {
-  width: 84px; height: 84px; border-radius: 50%; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
+  grid-column: 2 / 4; grid-row: 1 / 3;
+  width: 88px; height: 88px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  justify-self: end;
 }
-.swing-btn b { font-size: 16px; }
+.swing-btn b { font-size: 18px; }
 .swing-btn small { font-size: 8px; opacity: 0.8; }
-
-.console-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.console-buttons .game-btn { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 6px 10px; }
-.console-buttons i { font-style: normal; background: rgba(255,255,255,0.25); border-radius: 5px; padding: 0 5px; font-size: 10px; }
 
 .game-btn {
   background: rgba(20,20,20,0.55); color: #fff; border: 2px solid rgba(255,255,255,0.3);
   border-radius: 10px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: transform 0.08s ease, opacity 0.08s ease;
+  touch-action: manipulation; min-height: 48px;
 }
 .game-btn:hover { background: rgba(20,20,20,0.75); }
+.game-btn:active, .game-btn.is-pressed { transform: scale(0.92); opacity: 0.88; }
 .game-btn.primary { background: var(--accent); color: #3a2a10; border-color: #c8862a; }
 .game-btn.primary:hover { background: #f2b155; }
 .game-btn.danger { background: #7a2a2a; border-color: #a83a3a; }
@@ -253,7 +302,7 @@ button { font-family: inherit; }
   #app {
     grid-template-columns: 1fr; grid-template-rows: 1fr; padding: 8px; gap: 8px;
     padding-top: max(8px, env(safe-area-inset-top));
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-bottom: 0;
     padding-left: max(8px, env(safe-area-inset-left));
     padding-right: max(8px, env(safe-area-inset-right));
   }
@@ -266,8 +315,38 @@ button { font-family: inherit; }
   }
   .book-panel.open { display: flex; }
   .book-head #bookClose { display: inline-flex; align-items: center; justify-content: center; }
-  #stick, .swing-btn { display: flex; }
+  .tip-banner { display: none; }
+  #virtual-controls {
+    flex: 0 0 25dvh;
+    min-height: 156px;
+    background: rgba(8, 12, 18, 0.92);
+    border-top: 2px solid rgba(217, 180, 90, 0.45);
+  }
+  .stage-frame { flex: 1; min-height: 0; }
 }
 @media (min-width: 1100px) {
   .book-panel { display: flex !important; }
+  .center-col { position: relative; }
+  #virtual-controls {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.45));
+    padding-bottom: 12px;
+    pointer-events: none;
+  }
+  .vc-hud { pointer-events: auto; }
+  .vc-play { display: none; }
+  .stage-bottom { padding-bottom: 58px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .tip-banner { display: none; }
+  #virtual-controls {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    flex: none; min-height: 0; height: auto;
+    background: linear-gradient(180deg, transparent, rgba(8,12,18,0.88));
+    border-top: none;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
+  .vc-hud { justify-content: flex-end; padding-right: 8px; }
+  .vc-hud .game-btn { min-height: 40px; padding: 4px 8px; }
+  .dpad { width: 120px; height: 120px; }
 }

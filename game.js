@@ -17,6 +17,9 @@
   const messageEl = $('message');
   const heartsEl = $('hearts');
   const swingBtn = $('swingBtn');
+  const sneakBtn = $('sneakBtn');
+  const runBtn = $('runBtn');
+  const dpadEl = $('dpad');
   const bookBtn = $('bookBtn');
   const bagBtn = $('bagBtn');
   const menuBtn = $('menuBtn');
@@ -45,9 +48,6 @@
     windup: $('act-windup'), swing: $('act-swing'), caught: $('act-caught')
   };
   const rightCards = { morning: $('card-morning'), day: $('card-day'), evening: $('card-evening'), night: $('card-night') };
-  const stick = $('stick');
-  const stickBase = $('stickBase');
-  const stickKnob = $('stickKnob');
 
   // ---------- 保存 ----------
   const BOOK_KEY = 'mushitori-adv-book-v1';
@@ -103,7 +103,7 @@
     },
     insects: [],
     input: { x: 0, y: 0, run: false, sneak: false },
-    stick: { active: false, id: null, cx: 0, cy: 0, dx: 0, dy: 0 },
+    pad: { x: 0, y: 0, run: false, sneak: false, pid: null },
     totalCatches: 0,
     message: '',
     messageT: 0,
@@ -184,8 +184,48 @@
     lastTouchEnd = now;
   }, { passive: false });
   document.addEventListener('touchmove', (e) => {
-    if (e.touches && e.touches.length > 1) e.preventDefault();
+    if (e.target.closest('[data-scrollable]')) return;
+    e.preventDefault();
   }, { passive: false });
+  document.addEventListener('dblclick', (e) => e.preventDefault());
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  function tapPulse(el) {
+    if (!el) return;
+    el.classList.add('is-pressed');
+    if (navigator.vibrate) navigator.vibrate(14);
+    setTimeout(() => el.classList.remove('is-pressed'), 80);
+  }
+  function bindTap(el, handler) {
+    if (!el) return;
+    const fire = (e) => {
+      e.preventDefault();
+      unlockAudio();
+      tapPulse(el);
+      handler(e);
+    };
+    el.addEventListener('pointerdown', fire);
+  }
+  function bindHold(el, on, off) {
+    if (!el) return;
+    const down = (e) => {
+      e.preventDefault();
+      unlockAudio();
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('is-pressed');
+      if (navigator.vibrate) navigator.vibrate(12);
+      on(e);
+    };
+    const up = (e) => {
+      e.preventDefault();
+      el.classList.remove('is-pressed');
+      off(e);
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  }
 
   function readKeyboardInput() {
     let x = 0, y = 0;
@@ -198,37 +238,45 @@
     return { x, y, run, sneak };
   }
 
-  // 仮想スティック（タッチ）
-  function stickPointerDown(e) {
-    const rect = stickBase.getBoundingClientRect();
-    state.stick.active = true;
-    state.stick.id = e.pointerId;
-    state.stick.cx = rect.left + rect.width / 2;
-    state.stick.cy = rect.top + rect.height / 2;
-    stickBase.setPointerCapture(e.pointerId);
-    updateStickFromPointer(e);
+  function syncDpadClass() {
+    if (!dpadEl) return;
+    dpadEl.classList.toggle('press-l', state.pad.x < 0);
+    dpadEl.classList.toggle('press-r', state.pad.x > 0);
+    dpadEl.classList.toggle('press-u', state.pad.y < 0);
+    dpadEl.classList.toggle('press-d', state.pad.y > 0);
   }
-  function updateStickFromPointer(e) {
-    if (!state.stick.active) return;
-    let dx = e.clientX - state.stick.cx;
-    let dy = e.clientY - state.stick.cy;
-    const max = 34;
-    const d = Math.hypot(dx, dy) || 1;
-    const clamped = Math.min(d, max);
-    dx = dx / d * clamped; dy = dy / d * clamped;
-    state.stick.dx = dx / max; state.stick.dy = dy / max;
-    stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+  function readDpadFromEvent(e) {
+    const rect = dpadEl.getBoundingClientRect();
+    const nx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+    const ny = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+    const dead = 0.22;
+    state.pad.x = Math.abs(nx) >= dead ? (nx > 0 ? 1 : -1) : 0;
+    state.pad.y = Math.abs(ny) >= dead ? (ny > 0 ? 1 : -1) : 0;
+    syncDpadClass();
   }
-  function stickPointerUp() {
-    state.stick.active = false; state.stick.dx = 0; state.stick.dy = 0;
-    stickKnob.style.transform = 'translate(0,0)';
+  function clearDpad() {
+    state.pad.x = 0; state.pad.y = 0; state.pad.pid = null;
+    syncDpadClass();
   }
-  stickBase.addEventListener('pointerdown', (e) => { unlockAudio(); stickPointerDown(e); });
-  stickBase.addEventListener('pointermove', updateStickFromPointer);
-  stickBase.addEventListener('pointerup', stickPointerUp);
-  stickBase.addEventListener('pointercancel', stickPointerUp);
-
-  swingBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); tryStartSwing(); });
+  if (dpadEl) {
+    dpadEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      unlockAudio();
+      state.pad.pid = e.pointerId;
+      dpadEl.setPointerCapture(e.pointerId);
+      if (navigator.vibrate) navigator.vibrate(10);
+      readDpadFromEvent(e);
+    });
+    dpadEl.addEventListener('pointermove', (e) => {
+      if (state.pad.pid !== e.pointerId) return;
+      readDpadFromEvent(e);
+    });
+    dpadEl.addEventListener('pointerup', clearDpad);
+    dpadEl.addEventListener('pointercancel', clearDpad);
+  }
+  bindHold(runBtn, () => { state.pad.run = true; }, () => { state.pad.run = false; });
+  bindHold(sneakBtn, () => { state.pad.sneak = true; }, () => { state.pad.sneak = false; });
+  bindTap(swingBtn, () => tryStartSwing());
 
   // ---------- スイング ----------
   function tryStartSwing() {
@@ -355,12 +403,12 @@
   function updatePlayer(dt) {
     const p = state.player;
     const kb = readKeyboardInput();
-    let ix = kb.x, iy = kb.y, run = kb.run, sneak = kb.sneak;
-    if (state.stick.active) {
-      ix = state.stick.dx; iy = state.stick.dy;
-      const mag = Math.hypot(ix, iy);
-      run = mag > 0.72; sneak = mag > 0 && mag < 0.34;
-    }
+    let ix = kb.x + state.pad.x;
+    let iy = kb.y + state.pad.y;
+    ix = clamp(ix, -1, 1);
+    iy = clamp(iy, -1, 1);
+    const sneak = kb.sneak || state.pad.sneak;
+    const run = !sneak && (kb.run || state.pad.run);
     const mag = Math.hypot(ix, iy);
 
     if (p.swingPhase) {
@@ -580,8 +628,8 @@
   });
 
   function openBook() { bookOverlay.classList.add('open'); renderBook(); }
-  bookBtn.addEventListener('click', openBook);
-  bookClose.addEventListener('click', () => bookOverlay.classList.remove('open'));
+  bindTap(bookBtn, openBook);
+  bindTap(bookClose, () => bookOverlay.classList.remove('open'));
 
   function renderBag() {
     bagList.innerHTML = '';
@@ -609,12 +657,12 @@
       bagList.appendChild(row);
     });
   }
-  bagBtn.addEventListener('click', () => { bagOverlay.classList.add('open'); renderBag(); });
-  bagClose.addEventListener('click', () => bagOverlay.classList.remove('open'));
+  bindTap(bagBtn, () => { bagOverlay.classList.add('open'); renderBag(); });
+  bindTap(bagClose, () => bagOverlay.classList.remove('open'));
 
-  menuBtn.addEventListener('click', () => menuOverlay.classList.add('open'));
-  menuClose.addEventListener('click', () => menuOverlay.classList.remove('open'));
-  skipTimeBtn.addEventListener('click', () => { state.gameHour = (state.gameHour + 5) % 24; menuOverlay.classList.remove('open'); });
+  bindTap(menuBtn, () => menuOverlay.classList.add('open'));
+  bindTap(menuClose, () => menuOverlay.classList.remove('open'));
+  bindTap(skipTimeBtn, () => { state.gameHour = (state.gameHour + 5) % 24; menuOverlay.classList.remove('open'); });
   resetBtn.addEventListener('click', () => {
     if (!confirm('図鑑の記録を消してもよいですか？')) return;
     book = {}; saveBook(); state.totalCatches = 0; syncHud(); menuOverlay.classList.remove('open');
@@ -624,7 +672,7 @@
     muteBtn.textContent = muted ? '🔇' : '♪';
     muteBtn.classList.toggle('is-muted', muted);
   }
-  muteBtn.addEventListener('click', () => { muted = !muted; localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); updateMute(); });
+  bindTap(muteBtn, () => { muted = !muted; localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); updateMute(); });
 
   function showClear() {
     clearOverlay.classList.add('open');
@@ -663,9 +711,9 @@
     spawnPeriodInsects();
     setMessage('近づいて正面で網を振ろう', 3);
   }
-  startBtn.addEventListener('click', beginGame);
+  bindTap(startBtn, beginGame);
 
-  // ---------- レスポンシブ：狭幅ではスティック表示 ----------
+  // ---------- レスポンシブ：狭幅では十字キー＋右ボタンを表示 ----------
   function applyLayoutMode() {
     const narrow = window.innerWidth < 1100;
     document.body.classList.toggle('narrow', narrow);

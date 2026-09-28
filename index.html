@@ -25,8 +25,8 @@
           <h1>むしとり<br><em>アドベンチャー</em></h1>
           <p>網を持って里山を歩く。走ればチョウは逃げる。<br>ゆっくり近づけば、木のクワガタも見える。</p>
           <ul class="how">
-            <li><b>矢印/WASD</b>で歩く・<b>Shift</b>で走る・<b>C</b>で忍び足</li>
-            <li><b>Space</b>またはあみボタンで、向いている前だけ届く</li>
+            <li><b>十字キー / WASD</b>で歩く・<b>走る</b>・<b>忍び足</b></li>
+            <li><b>あみ</b>（Space）は向いている前だけ届く</li>
             <li>朝・昼・夕・夜、時間は自動で流れる</li>
           </ul>
           <button type="button" id="startBtn" class="primary game-btn">森へ出かける</button>
@@ -50,16 +50,6 @@
 
         <div class="stage-bottom">
           <div class="hearts" id="hearts"></div>
-          <div class="controls">
-            <div id="stick"><div id="stickBase"><div id="stickKnob"></div></div></div>
-            <button type="button" id="swingBtn" class="primary game-btn swing-btn"><b>あみ</b><small>SPACE</small></button>
-          </div>
-          <div class="console-buttons">
-            <button type="button" id="bookBtn" class="game-btn"><i>Y</i>図鑑</button>
-            <button type="button" id="bagBtn" class="game-btn"><i>X</i>虫かご</button>
-            <button type="button" id="menuBtn" class="game-btn"><i>+</i>メニュー</button>
-            <button type="button" id="muteBtn" class="game-btn mute-btn" aria-label="ミュート">♪</button>
-          </div>
         </div>
 
         <section id="catchCard">
@@ -69,6 +59,29 @@
           <p id="catchNote"></p>
           <span class="hint">タップで閉じる</span>
         </section>
+      </div>
+
+      <div id="virtual-controls">
+        <div class="vc-hud">
+          <button type="button" id="bookBtn" class="game-btn"><i>Y</i>図鑑</button>
+          <button type="button" id="bagBtn" class="game-btn"><i>X</i>虫かご</button>
+          <button type="button" id="menuBtn" class="game-btn"><i>+</i>メニュー</button>
+          <button type="button" id="muteBtn" class="game-btn mute-btn" aria-label="ミュート">♪</button>
+        </div>
+        <div class="vc-play">
+          <div class="dpad" id="dpad" aria-label="十字キー">
+            <span class="arr u">▲</span>
+            <span class="arr l">◀</span>
+            <span class="arr r">▶</span>
+            <span class="arr d">▼</span>
+            <span class="dpad-nub"></span>
+          </div>
+          <div class="vc-actions">
+            <button type="button" id="sneakBtn" class="game-btn hold-btn">忍び<small>C</small></button>
+            <button type="button" id="runBtn" class="game-btn hold-btn">走る<small>Shift</small></button>
+            <button type="button" id="swingBtn" class="primary game-btn swing-btn"><b>あみ</b><small>SPACE</small></button>
+          </div>
+        </div>
       </div>
 
       <p class="tip-banner">いろんな時間・場所で、たくさんのむしを見つけよう！ 走ると逃げやすい虫も、忍び足ならそっと近づける。</p>
@@ -106,7 +119,7 @@
           <button type="button" class="tab-btn" data-tab="evening">ゆう</button>
           <button type="button" class="tab-btn" data-tab="night">よる</button>
         </nav>
-        <div class="book-grid" id="bookGrid"></div>
+        <div class="book-grid" id="bookGrid" data-scrollable></div>
       </section>
     </aside>
 
@@ -134,7 +147,7 @@
     <section id="bag" class="overlay">
       <div class="bag-card">
         <header><h2>虫かご</h2><button type="button" class="close game-btn" id="bagClose" aria-label="閉じる">×</button></header>
-        <div id="bagList"></div>
+        <div id="bagList" data-scrollable></div>
       </div>
     </section>
 
